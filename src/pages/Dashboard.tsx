@@ -63,7 +63,7 @@ const Dashboard = () => {
         </div>
         <Button onClick={logout} variant="outline">Logout</Button>
       </div>
-
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         {categories.map((category) => (
           <Link to={`/quiz/${category.id}`} key={category.id}>

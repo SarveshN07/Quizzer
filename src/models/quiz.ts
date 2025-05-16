@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 export interface QuizCategory {
   id: string;
@@ -91,6 +92,9 @@ export const shuffleArray = <T>(array: T[]): T[] => {
 
 // Save quiz attempt to Supabase
 export const saveQuizAttempt = async (attempt: Omit<QuizAttempt, "id">): Promise<string | null> => {
+  // Convert QuizResponse[] to a proper JSON structure
+  const jsonResponses = attempt.responses as unknown as Json;
+
   const { data, error } = await supabase
     .from('quiz_attempts')
     .insert({
@@ -100,7 +104,7 @@ export const saveQuizAttempt = async (attempt: Omit<QuizAttempt, "id">): Promise
       score: attempt.score,
       total_questions: attempt.totalQuestions,
       correct_answers: attempt.correctAnswers,
-      responses: attempt.responses,
+      responses: jsonResponses,
       attempted_at: new Date().toISOString(),
     })
     .select()
@@ -135,7 +139,7 @@ export const getUserQuizAttempts = async (userId: string): Promise<QuizAttempt[]
     score: attempt.score,
     totalQuestions: attempt.total_questions,
     correctAnswers: attempt.correct_answers,
-    responses: attempt.responses,
+    responses: attempt.responses as unknown as QuizResponse[],
     attemptedAt: attempt.attempted_at,
   }));
 };
@@ -161,7 +165,7 @@ export const getQuizAttemptById = async (attemptId: string): Promise<QuizAttempt
     score: data.score,
     totalQuestions: data.total_questions,
     correctAnswers: data.correct_answers,
-    responses: data.responses,
+    responses: data.responses as unknown as QuizResponse[],
     attemptedAt: data.attempted_at,
   };
 };
