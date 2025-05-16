@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
 // Define the User type
@@ -37,6 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Check if user is logged in on initial load
   useEffect(() => {
@@ -76,7 +77,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem("quizUser", JSON.stringify(userWithoutPassword));
       
       toast.success("Login successful");
-      navigate("/dashboard");
+      
+      // Navigate to the originally requested page or dashboard
+      const from = location.state?.from || "/dashboard";
+      navigate(from, { replace: true });
     } catch (error: any) {
       toast.error(error.message || "Login failed");
       throw error;
