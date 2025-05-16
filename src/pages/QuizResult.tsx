@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { getQuizAttempts, QuizAttempt } from "@/models/quiz";
+import { getQuizAttemptById, QuizAttempt } from "@/models/quiz";
 import { useAuth } from "@/contexts/AuthContext";
 
 const QuizResult = () => {
@@ -14,27 +14,37 @@ const QuizResult = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
+    const loadResult = async () => {
+      if (!user) {
+        navigate("/login");
+        return;
+      }
 
-    if (!attemptId) {
-      navigate("/dashboard");
-      return;
-    }
+      if (!attemptId) {
+        navigate("/dashboard");
+        return;
+      }
 
-    // Get the specific attempt
-    const attempts = getQuizAttempts();
-    const foundAttempt = attempts.find(a => a.id === attemptId && a.userId === user.id);
-    
-    if (!foundAttempt) {
-      navigate("/dashboard");
-      return;
-    }
+      setLoading(true);
+      try {
+        // Get the specific attempt
+        const attemptData = await getQuizAttemptById(attemptId);
+        
+        if (!attemptData || attemptData.userId !== user.id) {
+          navigate("/dashboard");
+          return;
+        }
 
-    setAttempt(foundAttempt);
-    setLoading(false);
+        setAttempt(attemptData);
+      } catch (error) {
+        console.error("Error loading quiz result:", error);
+        navigate("/dashboard");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadResult();
   }, [attemptId, navigate, user]);
 
   const formatDate = (dateString: string) => {

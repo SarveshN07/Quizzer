@@ -4,17 +4,35 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { categories, getUserQuizAttempts, QuizAttempt } from "@/models/quiz";
+import { fetchCategories, getUserQuizAttempts, QuizAttempt, QuizCategory } from "@/models/quiz";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
+  const [categories, setCategories] = useState<QuizCategory[]>([]);
   const [recentAttempts, setRecentAttempts] = useState<QuizAttempt[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      const attempts = getUserQuizAttempts(user.id);
-      setRecentAttempts(attempts.slice(0, 5)); // Get the 5 most recent attempts
-    }
+    const loadData = async () => {
+      if (user) {
+        setLoading(true);
+        try {
+          const [fetchedCategories, attempts] = await Promise.all([
+            fetchCategories(),
+            getUserQuizAttempts(user.id)
+          ]);
+          
+          setCategories(fetchedCategories);
+          setRecentAttempts(attempts.slice(0, 5)); // Get the 5 most recent attempts
+        } catch (error) {
+          console.error("Error loading dashboard data:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadData();
   }, [user]);
 
   if (!user) {
@@ -25,6 +43,16 @@ const Dashboard = () => {
     const date = new Date(dateString);
     return date.toLocaleDateString() + " " + date.toLocaleTimeString();
   };
+
+  if (loading) {
+    return (
+      <div className="container max-w-5xl mx-auto p-4 py-8 animate-fade-in">
+        <div className="flex justify-center items-center h-64">
+          <p>Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-5xl mx-auto p-4 py-8 animate-fade-in">

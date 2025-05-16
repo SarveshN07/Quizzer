@@ -6,11 +6,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
-  categories, 
+  fetchCategories,
   getQuestionsByCategory, 
+  saveQuizAttempt,
   QuizQuestion, 
-  QuizResponse,
-  saveQuizAttempt
+  QuizResponse 
 } from "@/models/quiz";
 
 const Quiz = () => {
@@ -22,31 +22,43 @@ const Quiz = () => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [responses, setResponses] = useState<QuizResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [category, setCategory] = useState(categories.find(c => c.id === categoryId));
+  const [category, setCategory] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
+    const loadQuiz = async () => {
+      if (!user) {
+        navigate("/login");
+        return;
+      }
 
-    if (!categoryId) {
-      navigate("/dashboard");
-      return;
-    }
+      if (!categoryId) {
+        navigate("/dashboard");
+        return;
+      }
 
-    const cat = categories.find(c => c.id === categoryId);
-    if (!cat) {
-      navigate("/dashboard");
-      return;
-    }
+      setLoading(true);
+      try {
+        // Fetch category and questions
+        const categories = await fetchCategories();
+        const cat = categories.find(c => c.id === categoryId);
+        
+        if (!cat) {
+          navigate("/dashboard");
+          return;
+        }
 
-    setCategory(cat);
-    
-    const quizQuestions = getQuestionsByCategory(categoryId, 5);
-    setQuestions(quizQuestions);
-    setLoading(false);
+        setCategory(cat);
+        const quizQuestions = await getQuestionsByCategory(categoryId, 5);
+        setQuestions(quizQuestions);
+      } catch (error) {
+        console.error("Error loading quiz:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadQuiz();
   }, [categoryId, navigate, user]);
 
   const currentQuestion = questions[currentQuestionIndex];
@@ -79,7 +91,7 @@ const Quiz = () => {
     }
   };
 
-  const finishQuiz = (finalResponses: QuizResponse[]) => {
+  const finishQuiz = async (finalResponses: QuizResponse[]) => {
     setIsSubmitting(true);
     
     // Calculate score
@@ -87,9 +99,7 @@ const Quiz = () => {
     const score = Math.round((correctAnswers / questions.length) * 100);
     
     // Create attempt record
-    const attemptId = crypto.randomUUID();
     const attempt = {
-      id: attemptId,
       userId: user!.id,
       categoryId: categoryId!,
       categoryName: category?.name || "",
@@ -100,11 +110,18 @@ const Quiz = () => {
       attemptedAt: new Date().toISOString()
     };
     
-    // Save attempt
-    saveQuizAttempt(attempt);
-    
-    // Navigate to result page
-    navigate(`/result/${attemptId}`);
+    // Save attempt to Supabase
+    try {
+      const attemptId = await saveQuizAttempt(attempt);
+      if (attemptId) {
+        navigate(`/result/${attemptId}`);
+      } else {
+        throw new Error("Failed to save quiz attempt");
+      }
+    } catch (error) {
+      console.error("Error saving quiz attempt:", error);
+      setIsSubmitting(false);
+    }
   };
 
   if (loading) {

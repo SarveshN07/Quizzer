@@ -9,7 +9,127 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          color: string
+          description: string
+          icon: string
+          id: string
+          name: string
+        }
+        Insert: {
+          color: string
+          description: string
+          icon: string
+          id: string
+          name: string
+        }
+        Update: {
+          color?: string
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      questions: {
+        Row: {
+          category_id: string
+          correct_answer_index: number
+          id: string
+          options: Json
+          question_text: string
+        }
+        Insert: {
+          category_id: string
+          correct_answer_index: number
+          id: string
+          options: Json
+          question_text: string
+        }
+        Update: {
+          category_id?: string
+          correct_answer_index?: number
+          id?: string
+          options?: Json
+          question_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_attempts: {
+        Row: {
+          attempted_at: string
+          category_id: string
+          category_name: string
+          correct_answers: number
+          id: string
+          responses: Json
+          score: number
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          attempted_at?: string
+          category_id: string
+          category_name: string
+          correct_answers: number
+          id?: string
+          responses: Json
+          score: number
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          attempted_at?: string
+          category_id?: string
+          category_name?: string
+          correct_answers?: number
+          id?: string
+          responses?: Json
+          score?: number
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

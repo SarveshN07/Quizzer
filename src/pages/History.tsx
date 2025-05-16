@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { getUserQuizAttempts, QuizAttempt, categories } from "@/models/quiz";
+import { getUserQuizAttempts, fetchCategories, QuizAttempt, QuizCategory } from "@/models/quiz";
 import { useAuth } from "@/contexts/AuthContext";
 
 const History = () => {
@@ -20,19 +20,36 @@ const History = () => {
   const { user } = useAuth();
   const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
   const [filteredAttempts, setFilteredAttempts] = useState<QuizAttempt[]>([]);
+  const [categories, setCategories] = useState<QuizCategory[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
+    const loadHistory = async () => {
+      if (!user) {
+        navigate("/login");
+        return;
+      }
 
-    const userAttempts = getUserQuizAttempts(user.id);
-    setAttempts(userAttempts);
-    setFilteredAttempts(userAttempts);
-    setLoading(false);
+      setLoading(true);
+      try {
+        // Load categories and user attempts
+        const [fetchedCategories, userAttempts] = await Promise.all([
+          fetchCategories(),
+          getUserQuizAttempts(user.id)
+        ]);
+
+        setCategories(fetchedCategories);
+        setAttempts(userAttempts);
+        setFilteredAttempts(userAttempts);
+      } catch (error) {
+        console.error("Error loading history:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadHistory();
   }, [navigate, user]);
 
   useEffect(() => {
