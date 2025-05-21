@@ -32,31 +32,30 @@ jobs:
     - name: Deploy via SSH
       run: |
         echo "🚀 Starting remote deployment..."
-        ssh -v ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          echo "🔍 Checking existing Docker container..."
-          docker ps -a
-
-          echo "🛑 Stopping and removing old container if exists..."
-          docker stop vite-app || true
-          docker rm vite-app || true
-
-          echo "📁 Checking for repo directory..."
+        ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          echo "📦 Checking for existing repo..."
           if [ -d ~/vite-deploy ]; then
-            echo "✅ Repo directory exists, pulling latest code..."
             cd ~/vite-deploy && git pull origin main
           else
-            echo "📦 Cloning repository..."
             git clone https://github.com/${{ github.repository }} ~/vite-deploy && cd ~/vite-deploy
           fi
 
-          echo "📂 Current directory: $(pwd)"
-          echo "📄 Listing files:"
-          ls -la
+          cd ~/vite-deploy
 
-          echo "🐳 Building Docker image..."
+          echo "🐳 Building updated Docker image (if needed)..."
           docker build -t vite-app .
 
-          echo "🚢 Running Docker container..."
+          echo "🧼 Pruning unused Docker images (safe cleanup)..."
+          docker image prune -f
+
+          echo "🔍 Checking if old container is running..."
+          if docker ps -a --format '{{.Names}}' | grep -Eq '^vite-app$'; then
+            echo "🛑 Stopping and removing existing container..."
+            docker stop vite-app
+            docker rm vite-app
+          fi
+
+          echo "🚢 Running Docker container on port 3000 -> 4173"
           docker run -d -p 3000:4173 --name vite-app vite-app
 
           echo "✅ Deployment complete."
