@@ -1,24 +1,20 @@
+# Use Node 18 base image
 FROM node:18
 
-# Install serve globally first to leverage Docker cache
-RUN npm install -g serve
-
+# Set working directory inside container
 WORKDIR /app
 
-# Only copy package files first to cache node_modules unless dependencies change
+# Copy only package files first for layer caching
 COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Now copy the rest of the app
+# Copy the remaining source code
 COPY . .
 
-# Build the Vite app
-RUN npm run build
+# Expose the dev server port
+EXPOSE 4713
 
-# Expose Vite production port
-EXPOSE 4173
-
-# Serve built app
-CMD ["serve", "-s", "dist", "-l", "4173"]
+# Run Vite dev server, binding to all interfaces on port 4713
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "4713"]
