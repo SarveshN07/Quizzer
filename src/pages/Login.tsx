@@ -50,7 +50,7 @@ const Login = () => {
             <div className="flex justify-center mb-4">
               <div className="text-4xl">🧠</div>
             </div>
-            <CardTitle className="text-2xl text-center">Quizzer </CardTitle>
+            <CardTitle className="text-2xl text-center">Quizzer by swapy</CardTitle>
             <CardDescription className="text-center">
               Enter your email to sign in to your account
             </CardDescription>
