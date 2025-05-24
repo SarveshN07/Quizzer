@@ -1,0 +1,33 @@
+---
+- name: Deploy Vite App
+  hosts: localhost
+  become: false
+
+  tasks:
+    - name: Pull latest code
+      git:
+        repo: https://SarveshN07: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@github.com/SarveshN07/Quizzer.git
+        dest: ~/vite-deploy
+        version: main
+        force: yes
+
+    - name: Build Docker image
+      command: docker build -t vite-app .
+      args:
+        chdir: ~/vite-deploy
+
+    - name: Stop and remove old container (if exists)
+      shell: |
+        docker stop vite-app && docker rm vite-app
+      ignore_errors: true
+
+    - name: Prune old images
+      command: docker image prune -f
+
+    - name: Run new container
+      command: docker run -d -p 3000:4713 --name vite-app vite-app
+
+    - name: Wait for the app
+      wait_for:
+        port: 3000
+        delay: 3
